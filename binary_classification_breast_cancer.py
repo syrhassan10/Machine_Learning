@@ -261,6 +261,9 @@ def bgd_test():
 
     # Using weights from BGD for test data
     Z = np.dot(X1_test,BGD3[1])
+    print(Z.shape)
+    Z_train = np.dot(X1_train,BGD3[1])
+    print(Z_train.shape)
 
     precision_arr, recall_arr, f1_score_arr, misclassification_rate_arr, beta_arr,fp_rate_arr,tp_rate_arr,index=Threshold_finder(Z)
     print('Misclassification Rate:',misclassification_rate_arr[index])
@@ -268,6 +271,15 @@ def bgd_test():
     plot_scatter(recall_arr, precision_arr, 'Precision/Recall Curve', 'Recall', 'Precision', 'Precision/Recall Curve')
 
     plot_scatter(fp_rate_arr, tp_rate_arr, 'ROC', 'False Positive Rate', 'True Positive Rate', 'ROC Curve BGD')
+    '''
+    precision_arr, recall_arr, f1_score_arr, misclassification_rate_arr, beta_arr,fp_rate_arr,tp_rate_arr,index = Threshold_finder(Z_train)
+    print('Misclassification Train Rate:',misclassification_rate_arr[index])
+    print('F1 Train Score:',f1_score_arr[index])
+    plot_scatter(recall_arr, precision_arr, 'Precision/Recall Curve', 'Recall', 'Precision', 'Precision/Recall Curve')
+
+    plot_scatter(fp_rate_arr, tp_rate_arr, 'ROC', 'False Positive Rate', 'True Positive Rate', 'ROC Curve BGD')
+    '''
+
 
 def sgd_test():
         
@@ -288,14 +300,22 @@ def sgd_test():
     plot_learning_rate_vs_loss(ephocs, ephocs2, ephocs3, SGD[0],SGD2[0], SGD3[0], 'Learning Rate Vs. Loss Function Stochastic','alpha: 0.0001','alpha: 0.1','alpha: 5','epochs')
     # Using weights from BGD for test data
     Z = np.dot(X1_test,SGD2[1])
-
+    Z_train= np.dot(X1_test,SGD2[1])
+    
     precision_arr, recall_arr, f1_score_arr, misclassification_rate_arr, beta_arr,fp_rate_arr,tp_rate_arr,index=Threshold_finder(Z)
     print('Misclassification Rate:',misclassification_rate_arr[index])
     print('F1 Score:',f1_score_arr[index])
     plot_scatter(recall_arr, precision_arr, 'Precision/Recall Curve', 'Recall', 'Precision', 'Precision/Recall Curve')
 
     plot_scatter(fp_rate_arr, tp_rate_arr, 'ROC', 'False Positive Rate', 'True Positive Rate', 'ROC Curve BGD')
+    '''
+    precision_arr, recall_arr, f1_score_arr, misclassification_rate_arr, beta_arr,fp_rate_arr,tp_rate_arr,index=Threshold_finder(Z_train)
+    print('Misclassification Train Rate:',misclassification_rate_arr[index])
+    print('F1 Train Score:',f1_score_arr[index])
+    plot_scatter(recall_arr, precision_arr, 'Precision/Recall Curve', 'Recall', 'Precision', 'Precision/Recall Curve')
 
+    plot_scatter(fp_rate_arr, tp_rate_arr, 'ROC', 'False Positive Rate', 'True Positive Rate', 'ROC Curve BGD')
+    '''
 
 
 X1_train, t_train, X1_test, t_test = standardized_data_with_bias()
