@@ -116,64 +116,116 @@ def classification_calculator(y_true, y_pred,beta):
     print('**********************************************************************************', '\n')
 
     acc = 100*((true_pos + true_neg)/(Pos + Neg))
-    accuracy_BGD.append([acc,beta])
-
     if(true_pos == 0):
         precision = 0
     else:
         precision = true_pos / (true_pos + false_pos)
     recall = true_pos / Pos
 
-    precision_arr.append(precision)
-    recall_arr.append(recall)
-
+    fp_rate = false_pos / Neg
+    
+    tp_rate = true_pos / Pos
     #true positives : y =p, t=p; their number is denoted TP;
     #false positives : y =p, t=n; their number is denoted FP.
     #true negatives : y =n, t=n; their number is denoted TN
     #false negatives : y =n, t=p; their number is denoted FN.
 
+    if(precision == 0 and recall == 0):
+        f1_score = -1 # undefined
+    else:
+        f1_score = 2* ((precision*recall)/(precision+recall))
 
-    return 0
+    misclassification_rate = 100 * (false_pos+false_neg)/(Pos+Neg) 
+    return precision, recall, f1_score, misclassification_rate, acc,fp_rate, tp_rate
+
+def plot_learning_rate_vs_loss(i1, i2, i3, BGD1,BGD2, BGD3,title):
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(np.arange(i1), BGD1, label='Alpha: 0.0001')
+    plt.plot(np.arange(i2), BGD2, label='Alpha: 0.01')
+    plt.plot(np.arange(i3), BGD3, label='Alpha: 0.9')
+
+    plt.xlabel('Iterations')
+    plt.ylabel('Loss')
+    plt.title(title)
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
 
+def Threshold_finder(Z):
+
+    np.sort(Z)
+    accuracy_BGD = []
+    precision_arr = []
+    recall_arr = []
+    f1_score_arr = []
+    misclassification_rate_arr = []
+    beta_arr = []
+
+    fp_rate_arr =[]
+    tp_rate_arr =[]
+
+    for beta in Z:
+        # Compute predictions based on beta
+        y_pred = (Z >= beta).astype(int)
+        precision, recall, f1_score, misclassification_rate, acc, fp_rate, tp_rate = classification_calculator(t_test, y_pred,beta)
+        accuracy_BGD.append(acc)
+        precision_arr.append(precision)
+        recall_arr.append(recall)
+        f1_score_arr.append(f1_score)
+        misclassification_rate_arr.append(misclassification_rate)
+        beta_arr.append(beta)
+        fp_rate_arr.append(fp_rate)
+        tp_rate_arr.append(tp_rate)
+        #print(y_pred)
+
+
+    min_x = 100
+
+    # Loop through list to find max x value and its index
+    i =0
+    index = 0
+    for misclas_rate in misclassification_rate_arr:
+        if misclas_rate < min_x:
+            min_x = misclas_rate
+            max_beta = beta_arr[i]
+            index = i
+            
+        i = i + 1
+    print("Min Misclassification rate is: ", min_x)
+    print("It occurs at beta:", max_beta)
+
+
+    return precision_arr, recall_arr, f1_score_arr, misclassification_rate_arr, beta_arr, fp_rate_arr,tp_rate_arr,index
 
 X1_train, t_train, X1_test, t_test = standardized_data_with_bias()
 
 iterations = 1000
-BGD = batch_gradient_descent(X1_train,t_train,0.1,iterations)
+a1 = 0.0001
+BGD1 = batch_gradient_descent(X1_train,t_train,a1,iterations)
+
+iterations2 = 500
+a2 = 0.01
+BGD2 = batch_gradient_descent(X1_train,t_train,a2,iterations2)
+
+iterations3 = 200
+a3 = 0.5
+BGD3 = batch_gradient_descent(X1_train,t_train,a3,iterations3)
 
 
-Z = np.dot(X1_test,BGD[1])
+plot_learning_rate_vs_loss(iterations, iterations2, iterations3, BGD1[0],BGD2[0], BGD3[0], 'Learning Rate Vs. Loss Function BGD')
 
-np.sort(Z)
-accuracy_BGD = []
-precision_arr = []
-recall_arr = []
+# Using weights from BGD for test data
+Z = np.dot(X1_test,BGD3[1])
 
 
-for beta in Z:
-    # Compute predictions based on beta
-    y_pred = (Z >= beta).astype(int)
-    classification_calculator(t_test, y_pred,beta)
-
-    #print(y_pred)
+precision_arr, recall_arr, f1_score_arr, misclassification_rate_arr, beta_arr,fp_rate_arr,tp_rate_arr,index=Threshold_finder(Z)
 
 
-max_x = 0
-max_index = -1  # 
+print('Misclassification Rate:',misclassification_rate_arr[index])
+print('F1 Score:',f1_score_arr[index])
 
-# Loop through list to find max x value and its index
-for accuracy in accuracy_BGD:
-    if accuracy[0] > max_x:
-        max_x = accuracy[0]
-        max_beta = accuracy[1]
-
-print("Maximum x value is:", max_x)
-print("It occurs at beta:", max_beta)
-
-print(X1_test.shape)
-
-#plt.plot(np.arange(iterations), BGD[0])
 plt.scatter(recall_arr, precision_arr, label='Precision/Recall Curve', c='purple')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
@@ -183,5 +235,11 @@ plt.grid(True)
 plt.show() 
 
 
-
-#print(BGD)
+plt.figure(figsize=(10, 6))
+plt.scatter(fp_rate_arr, tp_rate_arr, marker='o', c='blue')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve BGD')
+plt.legend()
+plt.grid(True)
+plt.show()
