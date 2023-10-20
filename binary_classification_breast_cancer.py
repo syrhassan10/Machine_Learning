@@ -35,6 +35,39 @@ def standardized_data_with_bias():
 def sigmoid(x):
     return 1 / (1+ np.exp(-x))
 
+def stochastic_gradient_descent(X_train, T_train, alpha, epochs):
+    cost_list = []
+    N = X_train.shape[1]  # number of features
+    M = X_train.shape[0]  # number of examples
+    w = np.zeros(N)
+
+    # Create an array of indices from 0 to m-1
+    indices = np.arange(M)
+
+    # Shuffle the array of indices
+    np.random.shuffle(indices)
+
+    # Use the shuffled indices to shuffle X_train and t_train in a consistent manner
+    X_train_shuffled = X_train[indices]
+    t_train_shuffled = t_train[indices]
+    for epoch in range(epochs):
+        loss = 0
+        for i in range(M):
+            x_i = X_train_shuffled[i, :]
+            t_i = t_train_shuffled[i]
+
+            z = np.dot(x_i, w)
+            y = sigmoid(z)
+
+            loss = loss + (t_i*np.logaddexp(0,-z) + (1-t_i)*np.logaddexp(0,z))
+            
+            w = w - alpha * (y - t_i) * x_i
+
+        cost_list.append(loss/M)
+
+
+    return cost_list, w
+
 
 def batch_gradient_descent(X_train,T_train,alpha,iterations):
     cost_list = []
@@ -138,20 +171,29 @@ def classification_calculator(y_true, y_pred,beta):
     misclassification_rate = 100 * (false_pos+false_neg)/(Pos+Neg) 
     return precision, recall, f1_score, misclassification_rate, acc,fp_rate, tp_rate
 
-def plot_learning_rate_vs_loss(i1, i2, i3, BGD1,BGD2, BGD3,title):
+def plot_learning_rate_vs_loss(i1, i2, i3, BGD1,BGD2, BGD3,title,label1,label2,label3,xlabel):
     plt.figure(figsize=(10, 6))
 
-    plt.plot(np.arange(i1), BGD1, label='Alpha: 0.0001')
-    plt.plot(np.arange(i2), BGD2, label='Alpha: 0.01')
-    plt.plot(np.arange(i3), BGD3, label='Alpha: 0.9')
+    plt.plot(np.arange(i1), BGD1, label=label1)
+    plt.plot(np.arange(i2), BGD2, label=label2)
+    plt.plot(np.arange(i3), BGD3, label=label3)
 
-    plt.xlabel('Iterations')
+    plt.xlabel(xlabel)
     plt.ylabel('Loss')
     plt.title(title)
     plt.legend()
     plt.grid(True)
     plt.show()
 
+def plot_scatter(x,y,label, xlabel,ylabel,title):
+    plt.figure(figsize=(10, 6))
+    plt.scatter(x, y, c='purple',label=label)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.legend()
+    plt.grid(True)
+    plt.show() 
 
 def Threshold_finder(Z):
 
@@ -199,47 +241,65 @@ def Threshold_finder(Z):
 
     return precision_arr, recall_arr, f1_score_arr, misclassification_rate_arr, beta_arr, fp_rate_arr,tp_rate_arr,index
 
+
+def bgd_test():    
+    iterations = 1000
+    a1 = 0.0001
+    BGD1 = batch_gradient_descent(X1_train,t_train,a1,iterations)
+
+    iterations2 = 500
+    a2 = 0.01
+    BGD2 = batch_gradient_descent(X1_train,t_train,a2,iterations2)
+
+    iterations3 = 200
+    a3 = 0.5
+    BGD3 = batch_gradient_descent(X1_train,t_train,a3,iterations3)
+
+
+    plot_learning_rate_vs_loss(iterations, iterations2, iterations3, BGD1[0],BGD2[0], BGD3[0], 'Learning Rate Vs. Loss Function BGD', 'alpha: 0.0001','alpha: 0.01','alpha: 0.5','iterations')
+
+    # Using weights from BGD for test data
+    Z = np.dot(X1_test,BGD3[1])
+
+    precision_arr, recall_arr, f1_score_arr, misclassification_rate_arr, beta_arr,fp_rate_arr,tp_rate_arr,index=Threshold_finder(Z)
+    print('Misclassification Rate:',misclassification_rate_arr[index])
+    print('F1 Score:',f1_score_arr[index])
+    plot_scatter(recall_arr, precision_arr, 'Precision/Recall Curve', 'Recall', 'Precision', 'Precision/Recall Curve')
+
+    plot_scatter(fp_rate_arr, tp_rate_arr, 'ROC', 'False Positive Rate', 'True Positive Rate', 'ROC Curve BGD')
+
+def sgd_test():
+        
+    ephocs =20
+    a1 = 0.0001
+    SGD = stochastic_gradient_descent(X1_train,t_train,a1,ephocs)
+
+    ephocs2 =20
+    a2 = 0.1
+    SGD2 = stochastic_gradient_descent(X1_train,t_train,a2,ephocs2)
+
+    ephocs3 =20
+    a3 = 5
+    SGD3 = stochastic_gradient_descent(X1_train,t_train,a3,ephocs3)
+
+
+
+    plot_learning_rate_vs_loss(ephocs, ephocs2, ephocs3, SGD[0],SGD2[0], SGD3[0], 'Learning Rate Vs. Loss Function Stochastic','alpha: 0.0001','alpha: 0.1','alpha: 5','epochs')
+    # Using weights from BGD for test data
+    Z = np.dot(X1_test,SGD2[1])
+
+    precision_arr, recall_arr, f1_score_arr, misclassification_rate_arr, beta_arr,fp_rate_arr,tp_rate_arr,index=Threshold_finder(Z)
+    print('Misclassification Rate:',misclassification_rate_arr[index])
+    print('F1 Score:',f1_score_arr[index])
+    plot_scatter(recall_arr, precision_arr, 'Precision/Recall Curve', 'Recall', 'Precision', 'Precision/Recall Curve')
+
+    plot_scatter(fp_rate_arr, tp_rate_arr, 'ROC', 'False Positive Rate', 'True Positive Rate', 'ROC Curve BGD')
+
+
+
 X1_train, t_train, X1_test, t_test = standardized_data_with_bias()
 
-iterations = 1000
-a1 = 0.0001
-BGD1 = batch_gradient_descent(X1_train,t_train,a1,iterations)
 
-iterations2 = 500
-a2 = 0.01
-BGD2 = batch_gradient_descent(X1_train,t_train,a2,iterations2)
+bgd_test()
 
-iterations3 = 200
-a3 = 0.5
-BGD3 = batch_gradient_descent(X1_train,t_train,a3,iterations3)
-
-
-plot_learning_rate_vs_loss(iterations, iterations2, iterations3, BGD1[0],BGD2[0], BGD3[0], 'Learning Rate Vs. Loss Function BGD')
-
-# Using weights from BGD for test data
-Z = np.dot(X1_test,BGD3[1])
-
-
-precision_arr, recall_arr, f1_score_arr, misclassification_rate_arr, beta_arr,fp_rate_arr,tp_rate_arr,index=Threshold_finder(Z)
-
-
-print('Misclassification Rate:',misclassification_rate_arr[index])
-print('F1 Score:',f1_score_arr[index])
-
-plt.scatter(recall_arr, precision_arr, label='Precision/Recall Curve', c='purple')
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.title('Precision/Recall Curve')
-plt.legend()
-plt.grid(True)
-plt.show() 
-
-
-plt.figure(figsize=(10, 6))
-plt.scatter(fp_rate_arr, tp_rate_arr, marker='o', c='blue')
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('ROC Curve BGD')
-plt.legend()
-plt.grid(True)
-plt.show()
+sgd_test()
