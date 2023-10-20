@@ -41,16 +41,17 @@ def stochastic_gradient_descent(X_train, T_train, alpha, epochs):
     M = X_train.shape[0]  # number of examples
     w = np.zeros(N)
 
-    # Create an array of indices from 0 to m-1
-    indices = np.arange(M)
-
-    # Shuffle the array of indices
-    np.random.shuffle(indices)
-
-    # Use the shuffled indices to shuffle X_train and t_train in a consistent manner
-    X_train_shuffled = X_train[indices]
-    t_train_shuffled = t_train[indices]
     for epoch in range(epochs):
+
+        # Create an array of indices from 0 to m-1
+        indices = np.arange(M)
+
+        # Shuffle the array of indices
+        np.random.shuffle(indices)
+
+        # Use the shuffled indices to shuffle X_train and t_train in a consistent manner
+        X_train_shuffled = X_train[indices]
+        t_train_shuffled = t_train[indices]
         loss = 0
         for i in range(M):
             x_i = X_train_shuffled[i, :]
