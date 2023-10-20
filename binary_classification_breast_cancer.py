@@ -4,7 +4,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 
-#🥰🥰🥰🥰🥰🥰🥰🥰
+
 
 def standardized_data_with_bias():
     breast_cancer = load_breast_cancer()
@@ -36,17 +36,6 @@ def sigmoid(x):
     return 1 / (1+ np.exp(-x))
 
 
-def classification_calculator(y_true, y_pred):
-    # positive when t = 0
-    # negative when t = 1
-
-    #true positives : y =p, t=p; their number is denoted TP;
-    #false positives : y =p, t=n; their number is denoted FP.
-    #true negatives : y =n, t=n; their number is denoted TN
-    #false negatives : y =n, t=p; their number is denoted FN.
-    #Sorina Dumitrescu (McMaster University) COE 4SL4 Fundamentals of Machine Learning September 20, 2023 8 / 13
-    return 0
-
 def batch_gradient_descent(X_train,T_train,alpha,iterations):
     cost_list = []
     N = X_train.shape[1] #number of features
@@ -69,6 +58,85 @@ def batch_gradient_descent(X_train,T_train,alpha,iterations):
     return  cost_list, w
 
 
+def classification_calculator(y_true, y_pred,beta):
+    # positive when t = 0
+    # negative when t = 1
+
+    if(y_true.shape != y_pred.shape):
+        return 0
+    
+    print('**********************************************************************************', '\n')
+
+    Neg = np.count_nonzero(y_true == 1)
+    Pos = np.count_nonzero(y_true == 0)
+  
+    print('-------------------------------------- ', '\n')
+
+    print('True: ', '\n')
+    print('Negative',Neg, '\n')
+    print('Positive', Pos, '\n')
+  
+  
+
+    Neg_predict = np.count_nonzero(y_pred == 1)
+    Pos_predict = np.count_nonzero(y_pred == 0)
+
+    print('Prediction: ', '\n')
+    print('Negative',Neg_predict, '\n')
+    print('Positive',Pos_predict, '\n')
+
+    false_pos =0
+    false_neg =0
+    true_neg =0
+    true_pos =0
+
+
+    for i in range(len(y_true)):
+        if(y_true[i] == y_pred[i]):
+            if(y_true[i] == 1):
+                true_neg = true_neg + 1
+            else:
+                true_pos = true_pos + 1
+        else:
+            if(y_true[i] == 1):
+                false_pos = false_pos + 1
+            else:
+                false_neg = false_neg + 1
+
+    print('##################################', '\n')
+
+    print('True Positive: ',true_pos ,'\n')
+    print('True Negative: ',true_neg ,'\n')
+    print('False Positive: ',false_pos ,'\n')
+    print('False Negative: ',false_neg ,'\n')
+
+    print('accuracy: ', 100*((true_pos + true_neg)/(Pos + Neg)), '% \n')
+    print('##################################', '\n')
+    
+    print('**********************************************************************************', '\n')
+
+    acc = 100*((true_pos + true_neg)/(Pos + Neg))
+    accuracy_BGD.append([acc,beta])
+
+    if(true_pos == 0):
+        precision = 0
+    else:
+        precision = true_pos / (true_pos + false_pos)
+    recall = true_pos / Pos
+
+    precision_arr.append(precision)
+    recall_arr.append(recall)
+
+    #true positives : y =p, t=p; their number is denoted TP;
+    #false positives : y =p, t=n; their number is denoted FP.
+    #true negatives : y =n, t=n; their number is denoted TN
+    #false negatives : y =n, t=p; their number is denoted FN.
+
+
+    return 0
+
+
+
 X1_train, t_train, X1_test, t_test = standardized_data_with_bias()
 
 iterations = 1000
@@ -78,18 +146,40 @@ BGD = batch_gradient_descent(X1_train,t_train,0.1,iterations)
 Z = np.dot(X1_test,BGD[1])
 
 np.sort(Z)
+accuracy_BGD = []
+precision_arr = []
+recall_arr = []
 
 
 for beta in Z:
     # Compute predictions based on beta
     y_pred = (Z >= beta).astype(int)
-    classification_calculator(y_pred,t_test)
-    print(y_pred)
+    classification_calculator(t_test, y_pred,beta)
+
+    #print(y_pred)
 
 
+max_x = 0
+max_index = -1  # 
 
+# Loop through list to find max x value and its index
+for accuracy in accuracy_BGD:
+    if accuracy[0] > max_x:
+        max_x = accuracy[0]
+        max_beta = accuracy[1]
 
-plt.plot(np.arange(iterations), BGD[0])
+print("Maximum x value is:", max_x)
+print("It occurs at beta:", max_beta)
+
+print(X1_test.shape)
+
+#plt.plot(np.arange(iterations), BGD[0])
+plt.scatter(recall_arr, precision_arr, label='Precision/Recall Curve', c='purple')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.title('Precision/Recall Curve')
+plt.legend()
+plt.grid(True)
 plt.show() 
 
 
