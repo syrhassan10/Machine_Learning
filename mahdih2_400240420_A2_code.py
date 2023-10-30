@@ -99,25 +99,25 @@ def classification_calculator(y_true, y_pred,beta):
     if(y_true.shape != y_pred.shape):
         return 0
     
-    print('**********************************************************************************', '\n')
+ #   print('**********************************************************************************', '\n')
 
     Neg = np.count_nonzero(y_true == 1)
     Pos = np.count_nonzero(y_true == 0)
   
-    print('-------------------------------------- ', '\n')
+ #   print('-------------------------------------- ', '\n')
 
-    print('True: ', '\n')
-    print('Negative',Neg, '\n')
-    print('Positive', Pos, '\n')
+ #   print('True: ', '\n')
+ #   print('Negative',Neg, '\n')
+ #   print('Positive', Pos, '\n')
   
   
 
     Neg_predict = np.count_nonzero(y_pred == 1)
     Pos_predict = np.count_nonzero(y_pred == 0)
 
-    print('Prediction: ', '\n')
-    print('Negative',Neg_predict, '\n')
-    print('Positive',Pos_predict, '\n')
+#    print('Prediction: ', '\n')
+#    print('Negative',Neg_predict, '\n')
+#    print('Positive',Pos_predict, '\n')
 
     false_pos =0
     false_neg =0
@@ -137,17 +137,17 @@ def classification_calculator(y_true, y_pred,beta):
             else:
                 false_neg = false_neg + 1
 
-    print('##################################', '\n')
+  #  print('##################################', '\n')
 
-    print('True Positive: ',true_pos ,'\n')
-    print('True Negative: ',true_neg ,'\n')
-    print('False Positive: ',false_pos ,'\n')
-    print('False Negative: ',false_neg ,'\n')
+ #   print('True Positive: ',true_pos ,'\n')
+ #   print('True Negative: ',true_neg ,'\n')
+ #   print('False Positive: ',false_pos ,'\n')
+ #   print('False Negative: ',false_neg ,'\n')
 
-    print('accuracy: ', 100*((true_pos + true_neg)/(Pos + Neg)), '% \n')
-    print('##################################', '\n')
+  #  print('accuracy: ', 100*((true_pos + true_neg)/(Pos + Neg)), '% \n')
+ #   print('##################################', '\n')
     
-    print('**********************************************************************************', '\n')
+  #  print('**********************************************************************************', '\n')
 
     acc = 100*((true_pos + true_neg)/(Pos + Neg))
     if(true_pos == 0):
@@ -252,8 +252,8 @@ def bgd_test():
     a2 = 0.01
     BGD2 = batch_gradient_descent(X1_train,t_train,a2,iterations2)
 
-    iterations3 = 200
-    a3 = 0.5
+    iterations3 = 10000
+    a3 = 1.5
     BGD3 = batch_gradient_descent(X1_train,t_train,a3,iterations3)
 
 
@@ -261,7 +261,7 @@ def bgd_test():
 
     # Using weights from BGD for test data
     Z = np.dot(X1_test,BGD3[1])
-    print(Z.shape)
+    print(BGD3[1])
     Z_train = np.dot(X1_train,BGD3[1])
     print(Z_train.shape)
 
@@ -287,7 +287,7 @@ def sgd_test():
     a1 = 0.0001
     SGD = stochastic_gradient_descent(X1_train,t_train,a1,ephocs)
 
-    ephocs2 =20
+    ephocs2 =1000
     a2 = 0.1
     SGD2 = stochastic_gradient_descent(X1_train,t_train,a2,ephocs2)
 
@@ -300,6 +300,8 @@ def sgd_test():
     plot_learning_rate_vs_loss(ephocs, ephocs2, ephocs3, SGD[0],SGD2[0], SGD3[0], 'Learning Rate Vs. Loss Function Stochastic','alpha: 0.0001','alpha: 0.1','alpha: 5','epochs')
     # Using weights from BGD for test data
     Z = np.dot(X1_test,SGD2[1])
+    print(SGD2[1])
+
     Z_train= np.dot(X1_test,SGD2[1])
     
     precision_arr, recall_arr, f1_score_arr, misclassification_rate_arr, beta_arr,fp_rate_arr,tp_rate_arr,index=Threshold_finder(Z)
