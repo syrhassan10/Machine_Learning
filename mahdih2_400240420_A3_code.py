@@ -29,6 +29,7 @@ def data_setup():
     X_test = sc.transform(X_test)
 
 
+
     print(X_train.shape)
 
     #print(X_test.shape)
@@ -45,7 +46,7 @@ def KNN_algo_cross_validation(X_train,t_train,k_num):
 
     cv_errors = np.zeros(k_num)  # Array to store the cross-validation errors for each k
     cv_errors_train= np.zeros(k_num)  # Array to store the cross-validation errors for each k
-    '''
+    
     set1_data = X_train[0:80]
     set1_target = t_train[0:80]
 
@@ -63,15 +64,23 @@ def KNN_algo_cross_validation(X_train,t_train,k_num):
 
     sets_data = [set1_data,set2_data,set3_data,set4_data,set5_data]
     sets_target = [set1_target,set2_target,set3_target,set4_target,set5_target]
+    
     '''
-
-    # Assuming X_train and t_train are numpy arrays
     fold_size = len(X_train) // 5
-    cv_errors = np.zeros(k_num)  # Array to store the cross-validation errors for each k
+    cv_errors = np.zeros(k_num)
 
     # Create the 5 folds
     sets_data = [X_train[i*fold_size : (i+1)*fold_size] for i in range(5)]
     sets_target = [t_train[i*fold_size : (i+1)*fold_size] for i in range(5)]
+    '''
+    print(sets_data[0].shape)
+    print(sets_data[1].shape)
+
+    print(sets_data[2].shape)
+
+    print(sets_data[3].shape)
+    print(sets_data[4].shape)
+
 
     # Perform 5-fold cross-validation
     for k in range(1, k_num + 1):  # Start from 1 since k=0 is not valid
@@ -145,6 +154,7 @@ def plot_scatter(x,y,x2,y2,label, xlabel,ylabel,title):
 
 def KNN(X_train,t_train,X_test,t_test,k):
     predictions = []
+    
     for test_point in X_test:
         x=0
         distances = np.zeros(len(X_train))
@@ -166,14 +176,14 @@ def KNN(X_train,t_train,X_test,t_test,k):
 
 X_train, t_train, X_test, t_test = data_setup()
 
-#errors,errors_train,ks = KNN_algo_cross_validation(X_train,t_train,50)
+errors,errors_train,ks = KNN_algo_cross_validation(X_train,t_train,10)
+print(errors)
 
+minIndex = np.argmin(errors)
 
-#minIndex = np.argmin(errors)
+plot_scatter(ks,errors,ks,errors_train, 'Er', 'K','Error', 'KNN Learning Training Eror vs 5 fold Cross Validtion ')
 
-#plot_scatter(ks,errors,ks,errors_train, 'Er', 'K','Error', 'KNN Learning Training Eror vs 5 fold Cross Validtion ')
+print('Lowest Cross Validation Error is ', errors[minIndex], 'which happens at K=: ', ks[minIndex])
 
-#print('Lowest Cross Validation Error is ', errors[minIndex], 'which happens at K=: ', ks[minIndex])
-
-print(KNN(X_train,t_train,X_test,t_test,10))
+print(KNN(X_train,t_train,X_test,t_test,ks[minIndex]))
 
