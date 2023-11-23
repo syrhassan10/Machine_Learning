@@ -29,7 +29,7 @@ def load_data(file_path):
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-def data_setup(features, labels, test_size=0.2, validation_size=0.25, random_state=420):
+def data_setup(features, labels, test_size=0.1, validation_size=0.2, random_state=420):
     """
     Splits the data into training, validation, and test sets, and standardizes the features.
 
@@ -69,11 +69,11 @@ def sigmoid_derivative(x):
 # Initialize network parameters
 def initialize_parameters(input_size, hidden_size1, hidden_size2, output_size):
     parameters = {
-        "W1": np.random.randn(hidden_size1, input_size) * 0.1,
+        "W1": np.random.randn(hidden_size1, input_size) ,
         "b1": np.zeros((hidden_size1, 1)),
-        "W2": np.random.randn(hidden_size2, hidden_size1) * 0.1,
+        "W2": np.random.randn(hidden_size2, hidden_size1) ,
         "b2": np.zeros((hidden_size2, 1)),
-        "W3": np.random.randn(output_size, hidden_size2) * 0.1,
+        "W3": np.random.randn(output_size, hidden_size2) ,
         "b3": np.zeros((output_size, 1))
     }
     return parameters
@@ -101,9 +101,13 @@ def backward_propagation(X, Y, cache, parameters):
     dZ3 = A3 - Y
     dW3 = np.dot(dZ3, A2.T) / m
     db3 = np.sum(dZ3, axis=1, keepdims=True) / m
+
+
     dZ2 = np.dot(W3.T, dZ3) * sigmoid_derivative(cache["Z2"])
-    dW2 = np.dot(dZ2, A1.T) / m
+    dW2 = np.dot(dZ2, A1.T) / m # taking the average of gradients in this layer
     db2 = np.sum(dZ2, axis=1, keepdims=True) / m
+
+
     dZ1 = np.dot(W2.T, dZ2) * sigmoid_derivative(cache["Z1"])
     dW1 = np.dot(dZ1, X) / m
     db1 = np.sum(dZ1, axis=1, keepdims=True) / m
@@ -129,6 +133,8 @@ def train(X_train, t_train, X_val, t_val, input_size, hidden_size1, hidden_size2
     parameters = initialize_parameters(input_size, hidden_size1, hidden_size2, output_size)
     best_loss = float('inf')
     no_improve_epoch = 0
+    validation_loss_arr = []
+    training_loss_arr = []
 
     for i in range(epochs):
         A, _ = forward_propagation(X_train, parameters)
@@ -137,6 +143,11 @@ def train(X_train, t_train, X_val, t_val, input_size, hidden_size1, hidden_size2
 
         # Validation
         val_loss = validate(X_val, t_val, parameters)
+        train_loss = validate(X_train, t_train, parameters)
+
+        validation_loss_arr.append(val_loss)
+        training_loss_arr.append(train_loss)
+
         if val_loss < best_loss:
             best_loss = val_loss
             best_parameters = parameters
@@ -145,13 +156,16 @@ def train(X_train, t_train, X_val, t_val, input_size, hidden_size1, hidden_size2
             no_improve_epoch += 1
 
         if no_improve_epoch > patience:
-            print(f"Early stopping at epoch {i}")
+            #print(f"Early stopping at epoch {i}")
+            #print("best_loss", best_loss)
             break
 
         if i % 1000 == 0 or i == epochs - 1:
-            print(f"Epoch {i}: Training loss: {compute_loss(A, t_train)}, Validation loss: {val_loss}")
+            #print(f"Epoch {i}: Training loss: {compute_loss(A, t_train)}, Validation loss: {val_loss}")
+            print("best_loss", best_loss)
 
-    return best_parameters
+
+    return best_parameters, validation_loss_arr,training_loss_arr,i
 
 
 def predict(X, parameters):
@@ -170,6 +184,17 @@ def misclassification_rate(predictions, true_labels):
     return misclassification_rate
 
 
+def plot_scatter(x,y,x2,y2,label, xlabel,ylabel,title):
+    plt.figure(figsize=(10, 6))
+    plt.plot(x, y, c='red', label='training Loss')  # Scatter plot
+    plt.plot(x2, y2, c='blue', label='Validation Error')  # Scatter plot
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
 
 
@@ -178,12 +203,42 @@ training_data, target_data = load_data(file_path)
 
 X_train, t_train, X_val, t_val, X_test, t_test = data_setup(training_data, target_data)
 
-print(X_train.shape[1])
 
-params=train(X_train, t_train, X_val, t_val, X_train.shape[1], 5, 3, 1, 0.005, 500, 5)
 
-predictions = predict(X_test,params)
+configurations = [(2, 6), (3, 5), (4, 4), (5, 3)]
 
-misclassification = misclassification_rate(predictions, t_test)
-print(f"Misclassification Rate: ", misclassification)
+for config in configurations:
+    n1, n2 = config
+    print(f"Training model with configuration: n1={n1}, n2={n2}")
+
+    # Train the model
+    params, validation_errors, training_errors, epoch_s = train(X_train, t_train, X_val, t_val, X_train.shape[1], n1, n2, 1, 0.005, 500, 5)
+
+    # Generate epochs array for plotting
+    epochs = np.arange(epoch_s + 1)
+
+    # Plot training and validation errors
+    #plot_scatter(epochs, training_errors, epochs, validation_errors, 's', 'Epochs', 'Cross-Entropy Loss', f'NeuralNet Configuration: n1={n1}, n2={n2}')
+
+    # Make predictions on the test set
+    predictions_test = validate(X_test,t_test,params)
+    predictions_train = validate(X_train,t_train,params)
+    predictions_validate = validate(X_val,t_val,params)
+
+
+    print(predictions_test,predictions_train,predictions_validate)
+
+
+    predict_classific_test = predict(X_test,params)
+    predict_classific_train = predict(X_train,params)
+    predict_classific_validate = predict(X_val,params)
+
+    # Calculate misclassification rate
+    misclassification_test = misclassification_rate(predict_classific_test, t_test)
+    misclassification_train = misclassification_rate(predict_classific_train, t_train)
+    misclassification_validate = misclassification_rate(predict_classific_validate, t_val)
+    print(params)
+    print(f"Misclassification Rate (TEST) for configuration n1={n1}, n2={n2}: {misclassification_test}\n")
+    print(f"Misclassification Rate (TRAIN) for configuration n1={n1}, n2={n2}: {misclassification_train}\n")
+    print(f"Misclassification Rate (Validate) for configuration n1={n1}, n2={n2}: {misclassification_validate}\n")
 
